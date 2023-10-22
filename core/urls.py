@@ -33,7 +33,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # apps
-    path('api/v1/auth', include('user_auth.urls')),
+    path('api/v1/user_auth', include('user_auth.urls')),
     path('api/v1/restaurant', include('restaurant.urls')),
 
     # swagger

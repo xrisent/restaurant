@@ -50,6 +50,12 @@ class Restaurant(models.Model):
         available_tables = self.tables.count() - reserved_tables_count
         return available_tables
     
+    # Увеличивает количество свободных столов
+    def increase_available_tables(self):
+        not_reserved_tables_count = self.tables.filter(is_reserved=False).count()
+        available_tables = self.tables.count() + not_reserved_tables_count
+        return available_tables
+    
     # Нужен для обновления рейтинга
     def update_rating(self):
         positive_reviews = self.review_set.filter(positive_or_not='positive').count()
@@ -84,6 +90,7 @@ class Review(models.Model):
     CHOICES = [('positive', 'Positive'), ('negative', 'Negative')]
 
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
     content = models.TextField()
     person = models.ForeignKey(Person, on_delete=models.SET_DEFAULT, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
