@@ -9,5 +9,4 @@ router.register(r'person', views.PersonViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('userprofile/<int:pk>/', views.UserDetail.as_view(), name='user-detail'),
 ]

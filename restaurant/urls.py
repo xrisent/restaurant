@@ -12,5 +12,4 @@ router.register(r'review', views.ReviewViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('userprofile/<int:pk>/', views.UserDetail.as_view(), name='user-detail'),
 ]

@@ -90,7 +90,7 @@ class Review(models.Model):
     CHOICES = [('positive', 'Positive'), ('negative', 'Negative')]
 
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=100, default='qwerty')
     content = models.TextField()
     person = models.ForeignKey(Person, on_delete=models.SET_DEFAULT, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
