@@ -22,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!si_r1#s)*_8f=lvrzmfhjrb$_$w+1c7%%3@h^a9my#@k2gz-c'
+SECRET_KEY = 'django-insecure-z7m5$&+wja26i&)-j5xz^tb=s6@k#ezojl*l9w#s!+j2rju-e-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Apps
-    'auth',
+    'user_auth',
     'restaurant',
 
     # Libraries
@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     'drf_yasg',
     'corsheaders',
     'rest_framework_simplejwt',
-
 ]
 
 MIDDLEWARE = [
@@ -120,9 +119,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 
     # SimpleJWT
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication', )
 }
 
 # SimpleJWT settings
@@ -165,7 +162,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
-
 
 
 # Internationalization
