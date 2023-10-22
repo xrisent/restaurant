@@ -22,20 +22,11 @@ class RestaurantSerializer(serializers.ModelSerializer):
         model = Restaurant
         fields = '__all__'
 
-    def decrease_available_tables(self, obj):
-        reserved_tables_count = obj.tables.filter(is_reserved=True).count()
-        available_tables = obj.tables.count() - reserved_tables_count
-        return available_tables
-    
-    def increase_available_tables(self, obj):
-        not_reserved_tables_count = obj.tables.filter(is_reserved=False).count()
-        available_tables = obj.tables.count() + not_reserved_tables_count
-        return available_tables
+    def get_available_tables(self, obj):
+        return obj.get_available_tables()
 
     def get_rating(self, obj):
-        positive_reviews = obj.review_set.filter(positive_or_not='positive').count()
-        negative_reviews = obj.review_set.filter(positive_or_not='negative').count()
-        return positive_reviews - negative_reviews
+        return obj.rating
 
 
 class TableSerializer(serializers.ModelSerializer):

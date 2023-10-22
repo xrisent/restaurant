@@ -8,16 +8,15 @@ from .serializers import *
 class RestaurantViewSet(viewsets.ModelViewSet):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.increase_available_tables()
-        serializer.decrease_available_tables()
+        serializer.instance.get_available_tables()
         serializer.instance.update_rating()
         serializer.save()
 
     def perform_update(self, serializer):
-        serializer.increase_available_tables()
-        serializer.decrease_available_tables()
+        serializer.instance.get_available_tables()
         serializer.instance.update_rating()
         serializer.save()
 

@@ -44,16 +44,10 @@ class Restaurant(models.Model):
     owner = models.ForeignKey(Person, on_delete=models.CASCADE)
     rating = models.IntegerField(default=0)
 
-    # Уменьшает количество свободных столов
-    def decrease_available_tables(self):
-        reserved_tables_count = self.tables.filter(is_reserved=True).count()
-        available_tables = self.tables.count() - reserved_tables_count
-        return available_tables
-    
-    # Увеличивает количество свободных столов
-    def increase_available_tables(self):
-        not_reserved_tables_count = self.tables.filter(is_reserved=False).count()
-        available_tables = self.tables.count() + not_reserved_tables_count
+    # Возвращает количество свободных столов
+    def get_available_tables(self):
+        reserved_tables_count = self.table_set.filter(is_reserved=True).count()
+        available_tables = self.table_set.count() - reserved_tables_count
         return available_tables
     
     # Нужен для обновления рейтинга
