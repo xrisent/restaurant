@@ -18,7 +18,7 @@ class Type(models.Model):
 class Dish(models.Model):
     name = models.CharField(max_length=150, help_text='Write here name of the dish')
     description = models.TextField(help_text='Write here description of the dish')
-    photo = models.ImageField(upload_to='dishes/')
+    photo = models.ImageField(upload_to='dishes/', null=True, blank=True)
     type = models.ForeignKey(Type, on_delete=models.SET_NULL, null=True, blank=True)
     price = models.PositiveIntegerField(default=0, help_text='Write here price of dish in som')
 
@@ -70,6 +70,8 @@ class Table(models.Model):
     number = models.PositiveIntegerField()
     is_reserved = models.BooleanField(default=False)
     reserved_by = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, default=None)
+    reserved_time = models.DateTimeField(null=True, blank=True, help_text='Write here time when you will come')
+    dishes = models.ManyToManyField(Dish)
 
     def __str__(self) -> str:
         return f'{self.number} in {self.restaurant} by {self.reserved_by}'

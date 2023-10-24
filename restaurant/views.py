@@ -1,5 +1,6 @@
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .models import *
 from .serializers import *
@@ -10,15 +11,13 @@ class RestaurantViewSet(viewsets.ModelViewSet):
     serializer_class = RestaurantSerializer
     permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.instance.get_available_tables()
-        serializer.instance.update_rating()
-        serializer.save()
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
 
-    def perform_update(self, serializer):
-        serializer.instance.get_available_tables()
-        serializer.instance.update_rating()
-        serializer.save()
+        instance.update_rating()
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class TypeViewSet(viewsets.ModelViewSet):
