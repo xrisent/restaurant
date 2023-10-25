@@ -16,6 +16,7 @@ router.register(r'user', views.UserViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('current_user/', views.CurrentUserView.as_view(), name='current_user'),
 
     # JWT tokens
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
