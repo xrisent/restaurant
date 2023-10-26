@@ -21,6 +21,7 @@ class Dish(models.Model):
     photo = models.ImageField(upload_to='dishes/', null=True, blank=True)
     type = models.ForeignKey(Type, on_delete=models.SET_NULL, null=True, blank=True)
     price = models.PositiveIntegerField(default=0, help_text='Write here price of dish in som')
+    made_of = models.TextField(help_text='Write here what is it made of', default='dk')
 
     def __str__(self) -> str:
         return f'{self.name}'
