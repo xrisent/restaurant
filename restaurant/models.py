@@ -15,12 +15,25 @@ class Type(models.Model):
         verbose_name_plural = 'Types'
 
 
+class Category(models.Model):
+    category = models.CharField(max_length=150, help_text='Write here category of food')
+
+    def __str__(self) -> str:
+        return f'{self.category}'
+    
+    class Meta:
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'
+
+
 class Dish(models.Model):
     name = models.CharField(max_length=150, help_text='Write here name of the dish')
     photo = models.ImageField(upload_to='dishes/', null=True, blank=True)
     type = models.ForeignKey(Type, on_delete=models.SET_NULL, null=True, blank=True)
     price = models.PositiveIntegerField(default=0, help_text='Write here price of dish in som')
     made_of = models.TextField(help_text='Write here what is it made of', default='dk')
+    amount = models.CharField(max_length=150, help_text='Write here amount of product', null=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self) -> str:
         return f'{self.name}'
@@ -38,6 +51,7 @@ class Drink(models.Model):
     price = models.PositiveIntegerField(default=0, help_text='Write here price of the drink in som')
     made_of = models.TextField(help_text='Write here what is it made of', null=True, blank=True)
     type = models.CharField(max_length=150, choices=CHOICES)
+    amount = models.CharField(max_length=150, help_text='Write here amount of product', null=True, blank=True)
 
     def __str__(self) -> str:
         return f'{self.name}'

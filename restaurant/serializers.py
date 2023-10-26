@@ -1,10 +1,16 @@
 from rest_framework import serializers
-from .models import Type, Dish, Restaurant, Table, Review, Drink
+from .models import *
 
 
 class TypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Type
+        fields = '__all__'
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
         fields = '__all__'
 
 

@@ -5,6 +5,7 @@ from . import views
 
 router = DefaultRouter()
 router.register(r'type', views.TypeViewSet)
+router.register(r'category', views.CategoryViewSet)
 router.register(r'dish', views.DishViewSet)
 router.register(r'drink', views.DrinkViewSet)
 router.register(r'restaurant', views.RestaurantViewSet)
