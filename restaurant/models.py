@@ -55,6 +55,7 @@ class Restaurant(models.Model):
     photo_3 = models.ImageField(upload_to='restaurants/', null=True, blank=True)
     type = models.ManyToManyField(Type)
     dishes = models.ManyToManyField(Dish)
+    drinks = models.ManyToManyField(Drink)
     average_bill = models.IntegerField(default=0, help_text='Write here average bill of restaurant in som')
     tables = models.PositiveIntegerField(default=0, help_text='Write here amount of tables that can be reserved')
     address = models.CharField(max_length=150, null=True, blank=True)
