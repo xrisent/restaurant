@@ -32,6 +32,12 @@ class DishViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
+class DrinkViewSet(viewsets.ModelViewSet):
+    queryset = Drink.objects.all()
+    serializer_class = DrinkSerializer
+    permission_classes = [IsAuthenticated]
+
+
 class TableViewSet(viewsets.ModelViewSet):
     queryset = Table.objects.all()
     serializer_class = TableSerializer

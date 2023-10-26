@@ -17,7 +17,6 @@ class Type(models.Model):
 
 class Dish(models.Model):
     name = models.CharField(max_length=150, help_text='Write here name of the dish')
-    description = models.TextField(help_text='Write here description of the dish')
     photo = models.ImageField(upload_to='dishes/', null=True, blank=True)
     type = models.ForeignKey(Type, on_delete=models.SET_NULL, null=True, blank=True)
     price = models.PositiveIntegerField(default=0, help_text='Write here price of dish in som')
@@ -29,6 +28,23 @@ class Dish(models.Model):
     class Meta:
         verbose_name = 'Dish'
         verbose_name_plural = 'Dishes'
+
+class Drink(models.Model):
+
+    CHOICES = [('alcohol', 'Alcohol'), ('hot', 'Hot'), ('cold', 'Cold')]
+
+    name = models.CharField(max_length=150, help_text='Write here name of the drink')
+    photo = models.ImageField(upload_to='drinks/', null=True, blank=True)
+    price = models.PositiveIntegerField(default=0, help_text='Write here price of the drink in som')
+    made_of = models.TextField(help_text='Write here what is it made of', null=True, blank=True)
+    type = models.CharField(max_length=150, choices=CHOICES)
+
+    def __str__(self) -> str:
+        return f'{self.name}'
+    
+    class Meta:
+        verbose_name = 'Drink'
+        verbose_name_plural = 'Drinks'
 
 
 class Restaurant(models.Model):
