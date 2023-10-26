@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 
 class Person(models.Model):
@@ -16,3 +18,12 @@ class Person(models.Model):
     class Meta:
         verbose_name = 'Person'
         verbose_name_plural = 'Persons'
+
+
+# Changing username in User if it is changed in Person
+@receiver(pre_save, sender=Person)
+def update_user_data(sender, instance, **kwargs):
+    if instance.user:
+        instance.user.email = instance.email
+        instance.user.username = instance.name
+        instance.user.save()
