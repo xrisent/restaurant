@@ -42,6 +42,8 @@ class Dish(models.Model):
         verbose_name = 'Dish'
         verbose_name_plural = 'Dishes'
 
+    
+
 class Drink(models.Model):
 
     CHOICES = [('alcohol', 'Alcohol'), ('hot', 'Hot'), ('cold', 'Cold')]
@@ -65,8 +67,6 @@ class Restaurant(models.Model):
     name = models.CharField(max_length=150, help_text='Write here name of the restaurant')
     description = models.TextField(help_text='Write here description of the restaurant', null=True, blank=True)
     photo_1 = models.ImageField(upload_to='restaurants/', null=True, blank=True)
-    photo_2 = models.ImageField(upload_to='restaurants/', null=True, blank=True)
-    photo_3 = models.ImageField(upload_to='restaurants/', null=True, blank=True)
     type = models.ManyToManyField(Type)
     dishes = models.ManyToManyField(Dish)
     drinks = models.ManyToManyField(Drink)
@@ -75,6 +75,7 @@ class Restaurant(models.Model):
     address = models.CharField(max_length=150, null=True, blank=True)
     owner = models.ForeignKey(Person, on_delete=models.CASCADE)
     rating = models.IntegerField(default=0)
+    plan = models.ImageField(upload_to='plans/', null=True, blank=True)
 
     # Возвращает количество свободных столов
     def get_available_tables(self):

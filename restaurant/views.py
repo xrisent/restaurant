@@ -6,9 +6,22 @@ from .models import *
 from .serializers import *
 
 
-class RestaurantViewSet(viewsets.ModelViewSet):
+class RestaurantViewSetView(viewsets.ModelViewSet):
     queryset = Restaurant.objects.all()
-    serializer_class = RestaurantSerializer
+    serializer_class = RestaurantSerializerView
+    permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        instance.update_rating()
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+class RestaurantViewSetCreate(viewsets.ModelViewSet):
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializerCreate
     permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, *args, **kwargs):

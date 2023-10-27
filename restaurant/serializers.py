@@ -25,8 +25,18 @@ class DrinkSerializer(serializers.ModelSerializer):
         model = Drink
         fields = '__all__'
 
+class TableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Table
+        fields = '__all__'
 
-class RestaurantSerializer(serializers.ModelSerializer):
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+class RestaurantSerializerCreate(serializers.ModelSerializer):
     available_tables = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
 
@@ -39,15 +49,20 @@ class RestaurantSerializer(serializers.ModelSerializer):
 
     def get_rating(self, obj):
         return obj.rating
+    
 
+class RestaurantSerializerView(serializers.ModelSerializer):
+    available_tables = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
+    dishes = DishSerializer(many=True, read_only=True)
+    drinks = DrinkSerializer(many=True, read_only=True)
 
-class TableSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Table
+        model = Restaurant
         fields = '__all__'
 
+    def get_available_tables(self, obj):
+        return obj.get_available_tables()
 
-class ReviewSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Review
-        fields = '__all__'
+    def get_rating(self, obj):
+        return obj.rating
