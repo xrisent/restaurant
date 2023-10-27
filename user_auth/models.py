@@ -11,6 +11,7 @@ class Person(models.Model):
     email = models.CharField(max_length=150, null=True, blank=True, help_text='Write here email of person')
     number = models.CharField(max_length=30, null=True, blank=True, help_text='Write here number of person')
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    tg_id = models.CharField(max_length=150, unique=True, null=True, blank=True, help_text='Write here your Telegram ID')
 
     def __str__(self):
         return f'{self.id}: {self.name}'

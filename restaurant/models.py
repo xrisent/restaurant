@@ -114,6 +114,19 @@ class Table(models.Model):
         verbose_name_plural = 'Tables'
 
 
+class Cart(models.Model):
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    dishes = models.ManyToManyField(Dish)
+    drinks = models.ManyToManyField(Drink)
+
+    def __str__(self) -> str:
+        return f'{self.person}'
+    
+    class Meta:
+        verbose_name = 'Cart'
+        verbose_name_plural = 'Carts'
+        
+
 class Review(models.Model):
 
     CHOICES = [('positive', 'Positive'), ('negative', 'Negative')]

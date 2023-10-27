@@ -52,3 +52,4 @@ class CurrentUserView(APIView):
         }
 
         return Response(response_data)
+    
