@@ -1,6 +1,12 @@
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.views import APIView
+from rest_framework.decorators import action
+
+
+
 
 from .models import *
 from .serializers import *
@@ -19,6 +25,7 @@ class RestaurantViewSetView(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
     
+
 class RestaurantViewSetCreate(viewsets.ModelViewSet):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializerCreate
@@ -69,7 +76,20 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
-class CartViewSet(viewsets.ModelViewSet):
-    queryset = Cart.objects.all()
-    serializer_class = CartSerializer
+class CartViewSetCreate(viewsets.ModelViewSet):
+    serializer_class = CartSerializerCreate
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Cart.objects.filter(person__user=user)
+    
+
+class CartViewSetView(viewsets.ModelViewSet):
+    serializer_class = CartSerializerView
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Cart.objects.filter(person__user=user)
+    

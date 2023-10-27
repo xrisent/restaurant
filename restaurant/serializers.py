@@ -37,7 +37,16 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CartSerializer(serializers.ModelSerializer):
+class CartSerializerCreate(serializers.ModelSerializer):
+    class Meta:
+        model = Cart
+        fields = '__all__'
+
+
+class CartSerializerView(serializers.ModelSerializer):
+    dishes = DishSerializer(many=True, read_only=True)
+    drinks = DrinkSerializer(many=True, read_only=True)
+    
     class Meta:
         model = Cart
         fields = '__all__'
