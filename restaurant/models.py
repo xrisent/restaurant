@@ -118,14 +118,27 @@ class Cart(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     dishes = models.ManyToManyField(Dish)
     drinks = models.ManyToManyField(Drink)
+    total_price = models.PositiveIntegerField(default=0)
 
     def __str__(self) -> str:
         return f'{self.person}'
     
+    def calculate_total_price(self):
+        total_price = 0
+
+        for dish in self.dishes.all():
+            total_price += dish.price
+
+        for drink in self.drinks.all():
+            total_price += drink.price
+
+        self.total_price = total_price
+        self.save()
+    
     class Meta:
         verbose_name = 'Cart'
         verbose_name_plural = 'Carts'
-        
+
 
 class Review(models.Model):
 

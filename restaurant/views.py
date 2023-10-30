@@ -1,4 +1,4 @@
-from rest_framework import viewsets, generics
+from rest_framework import viewsets, generics, mixins
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -82,7 +82,14 @@ class CartViewSetCreate(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Cart.objects.filter(person__user=user)
+        queryset = Cart.objects.filter(person__user=user)
+
+
+        for cart in queryset:
+            cart.calculate_total_price()
+
+        return queryset
+
     
 
 class CartViewSetView(viewsets.ModelViewSet):
@@ -91,5 +98,11 @@ class CartViewSetView(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Cart.objects.filter(person__user=user)
+        queryset = Cart.objects.filter(person__user=user)
+
+
+        for cart in queryset:
+            cart.calculate_total_price()
+
+        return queryset
     
