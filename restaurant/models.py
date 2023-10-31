@@ -158,6 +158,29 @@ class Cart(models.Model):
         self.calculate_total_price()
         self.save()
 
+    # Удаление объекта
+    def remove_object_cart(self, dish, drink):
+
+        if dish is not None and drink is not None:
+            if dish in self.dishes.all():
+                self.dishes.remove(dish)
+
+            if drink in self.drinks.all():
+                self.drinks.remove(drink)
+                
+        elif dish is not None and drink is None:
+
+            if dish in self.dishes.all():
+                self.dishes.remove(dish)
+
+        elif dish is None and drink is not None:
+
+            if drink in self.drinks.all():
+                self.drinks.remove(drink)
+
+        self.calculate_total_price()
+        self.save()
+
     # Очищение корзины
     def clear_cart(self):
 

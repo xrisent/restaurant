@@ -143,5 +143,22 @@ def update_cart(request):
             cart.clear_cart()
 
             return JsonResponse({'message': 'Cart cleared successfully'})
+        
+        elif action == 'remove':
+
+            person_id = request.POST.get('person_id')
+            dish_id = request.POST.get('dish_id')
+            drink_id = request.POST.get('drink_id')
+
+            try:
+                person = Person.objects.get(pk=person_id)
+            except Person.DoesNotExist:
+                return JsonResponse({'error': 'Person not found'}, status=404)
+            
+            cart, created = Cart.objects.get_or_create(person=person)
+
+            cart.remove_object_cart(dish=dish_id, drink=drink_id)
+
+            return JsonResponse({'message': 'Removed from cart successfully'})
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
