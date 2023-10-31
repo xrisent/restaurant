@@ -149,6 +149,7 @@ class Cart(models.Model):
 
             if dish not in self.dishes.all():
                 self.dishes.add(dish)
+
         elif dish is None and drink is not None:
 
             if drink not in self.drinks.all():
@@ -156,7 +157,17 @@ class Cart(models.Model):
 
         self.calculate_total_price()
         self.save()
+
+    # Очищение корзины
+    def clear_cart(self):
+
+        self.dishes.clear()
+        self.drinks.clear()
         
+        self.calculate_total_price()
+        self.save()
+         
+
 
     class Meta:
         verbose_name = 'Cart'

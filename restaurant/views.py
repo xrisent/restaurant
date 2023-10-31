@@ -111,19 +111,37 @@ class CartViewSetView(viewsets.ModelViewSet):
 @csrf_exempt
 def update_cart(request):
     if request.method == 'POST':
-        person_id = request.POST.get('person_id')
-        dish_id = request.POST.get('dish_id')
-        drink_id = request.POST.get('drink_id')
+        action = request.POST.get('action')
 
-        try:
-            person = Person.objects.get(pk=person_id)
-        except Person.DoesNotExist:
-            return JsonResponse({'error': 'Person not found'}, status=404)
+        if action == 'update':
+            person_id = request.POST.get('person_id')
+            dish_id = request.POST.get('dish_id')
+            drink_id = request.POST.get('drink_id')
 
-        cart, created = Cart.objects.get_or_create(person=person)
+            try:
+                person = Person.objects.get(pk=person_id)
+            except Person.DoesNotExist:
+                return JsonResponse({'error': 'Person not found'}, status=404)
 
-        cart.add_cart(dish=dish_id, drink=drink_id)
+            cart, created = Cart.objects.get_or_create(person=person)
+            
+            cart.add_cart(dish=dish_id, drink=drink_id)
 
-        return JsonResponse({'message': 'Cart updated successfully'})
+            return JsonResponse({'message': 'Cart updated successfully'})
+
+        elif action == 'clear':
+
+            person_id = request.POST.get('person_id')
+
+            try:
+                person = Person.objects.get(pk=person_id)
+            except Person.DoesNotExist:
+                return JsonResponse({'error': 'Person not found'}, status=404)
+
+            cart, created = Cart.objects.get_or_create(person=person)
+
+            cart.clear_cart()
+
+            return JsonResponse({'message': 'Cart cleared successfully'})
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
