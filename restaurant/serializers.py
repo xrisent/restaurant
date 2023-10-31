@@ -25,6 +25,7 @@ class DrinkSerializer(serializers.ModelSerializer):
         model = Drink
         fields = '__all__'
 
+
 class TableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Table
@@ -67,11 +68,21 @@ class RestaurantSerializerCreate(serializers.ModelSerializer):
         return obj.rating
     
 
+class DishSerializerView(serializers.ModelSerializer):
+    type = TypeSerializer(read_only=True)
+
+    class Meta:
+        model = Dish
+        fields = '__all__'
+
+
+
 class RestaurantSerializerView(serializers.ModelSerializer):
     available_tables = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
-    dishes = DishSerializer(many=True, read_only=True)
+    dishes = DishSerializerView(many=True, read_only=True)
     drinks = DrinkSerializer(many=True, read_only=True)
+    type = TypeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Restaurant

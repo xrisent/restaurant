@@ -1,9 +1,9 @@
-from rest_framework import viewsets, generics, mixins
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.views import APIView
-from rest_framework.decorators import action
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+
 
 
 
@@ -106,3 +106,24 @@ class CartViewSetView(viewsets.ModelViewSet):
 
         return queryset
     
+
+
+@csrf_exempt
+def update_cart(request):
+    if request.method == 'POST':
+        person_id = request.POST.get('person_id')
+        dish_id = request.POST.get('dish_id')
+        drink_id = request.POST.get('drink_id')
+
+        try:
+            person = Person.objects.get(pk=person_id)
+        except Person.DoesNotExist:
+            return JsonResponse({'error': 'Person not found'}, status=404)
+
+        cart, created = Cart.objects.get_or_create(person=person)
+
+        cart.add_cart(dish=dish_id, drink=drink_id)
+
+        return JsonResponse({'message': 'Cart updated successfully'})
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)

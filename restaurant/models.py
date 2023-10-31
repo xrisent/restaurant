@@ -123,6 +123,7 @@ class Cart(models.Model):
     def __str__(self) -> str:
         return f'{self.person}'
     
+    # Высчитывание стоимости корзины
     def calculate_total_price(self):
         total_price = 0
 
@@ -135,6 +136,28 @@ class Cart(models.Model):
         self.total_price = total_price
         self.save()
     
+    # Добавление dish и drink к существующему
+    def add_cart(self, dish, drink):
+        if dish is not None and drink is not None:
+            if dish not in self.dishes.all():
+                self.dishes.add(dish)
+
+            if drink not in self.drinks.all():
+                self.drinks.add(drink)
+                
+        elif dish is not None and drink is None:
+
+            if dish not in self.dishes.all():
+                self.dishes.add(dish)
+        elif dish is None and drink is not None:
+
+            if drink not in self.drinks.all():
+                self.drinks.add(drink)
+
+        self.calculate_total_price()
+        self.save()
+        
+
     class Meta:
         verbose_name = 'Cart'
         verbose_name_plural = 'Carts'
@@ -168,3 +191,8 @@ def create_tables(sender, instance, created, **kwargs):
             Table.objects.create(restaurant=instance, number=table_number)
 
 
+
+@receiver(post_save, sender=Person)
+def create_cart(sender, instance, created, **kwargs):
+    if created:
+        Cart.objects.create(person=instance)

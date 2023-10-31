@@ -18,4 +18,5 @@ router.register(r'cart_create', views.CartViewSetCreate, basename='cart_create')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('cart_update/', views.update_cart, name='cart-update')
 ]
