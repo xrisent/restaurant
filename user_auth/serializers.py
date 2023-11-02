@@ -34,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         number = validated_data['number']
 
-        person = Person(user=user, name=user.username, number=number)
+        person = Person(user=user, name=user.username, number=number, email=user.email)
         person.save()
 
         return user

@@ -138,22 +138,28 @@ class Cart(models.Model):
     
     # Добавление dish и drink к существующему
     def add_cart(self, dish, drink):
-        if dish is not None and drink is not None:
-            if dish not in self.dishes.all():
-                self.dishes.add(dish)
+        if dish is not None and dish not in self.drinks.all():
+            self.dishes.add(dish)
 
-            if drink not in self.drinks.all():
-                self.drinks.add(drink)
+        if drink is not None and drink not in self.drinks.all():
+            self.drinks.add(drink)
+
+        # if dish is not None and drink is not None:
+        #     if dish not in self.dishes.all():
+        #         self.dishes.add(dish)
+
+        #     if drink not in self.drinks.all():
+        #         self.drinks.add(drink)
                 
-        elif dish is not None and drink is None:
+        # elif dish is not None and drink is None:
 
-            if dish not in self.dishes.all():
-                self.dishes.add(dish)
+        #     if dish not in self.dishes.all():
+        #         self.dishes.add(dish)
 
-        elif dish is None and drink is not None:
+        # elif dish is None and drink is not None:
 
-            if drink not in self.drinks.all():
-                self.drinks.add(drink)
+        #     if drink not in self.drinks.all():
+        #         self.drinks.add(drink)
 
         self.calculate_total_price()
         self.save()
@@ -161,22 +167,15 @@ class Cart(models.Model):
     # Удаление объекта
     def remove_object_cart(self, dish, drink):
 
-        if dish is not None and drink is not None:
-            if dish in self.dishes.all():
-                self.dishes.remove(dish)
+        dish_in_list = self.dishes.filter(pk=dish).exists()
 
-            if drink in self.drinks.all():
-                self.drinks.remove(drink)
-                
-        elif dish is not None and drink is None:
+        drink_in_list = self.drinks.filter(pk=drink).exists()
 
-            if dish in self.dishes.all():
-                self.dishes.remove(dish)
+        if dish_in_list:
+            self.dishes.remove(dish)
 
-        elif dish is None and drink is not None:
-
-            if drink in self.drinks.all():
-                self.drinks.remove(drink)
+        if drink_in_list:
+            self.drinks.remove(drink)
 
         self.calculate_total_price()
         self.save()

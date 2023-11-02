@@ -155,7 +155,7 @@ def update_cart(request):
             except Person.DoesNotExist:
                 return JsonResponse({'error': 'Person not found'}, status=404)
             
-            cart, created = Cart.objects.get_or_create(person=person)
+            cart = Cart.objects.get(person=person)
 
             cart.remove_object_cart(dish=dish_id, drink=drink_id)
 
