@@ -176,7 +176,7 @@ SIMPLE_JWT = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Urumqi'
 
 USE_I18N = True
 
@@ -207,3 +207,4 @@ CORS_ALLOW_HEADERS = [
   'x-csrftoken',
   'x-requested-with']
 CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
+

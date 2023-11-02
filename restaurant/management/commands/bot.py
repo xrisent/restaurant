@@ -7,10 +7,10 @@ from datetime import datetime
 from django.db.utils import IntegrityError
 
 
-from restaurant.models import *
-from user_auth.models import *
-from user_auth.serializers import *
-from restaurant.serializers import *
+from restaurant.models import Restaurant, Table
+from user_auth.models import Person
+from user_auth.serializers import PersonSerializer
+from restaurant.serializers import TableSerializer, RestaurantSerializerView
 
 
 bot = telebot.TeleBot(config('TOKEN'))
@@ -92,7 +92,7 @@ def main(message):
                         table_number = table_serializer.data.get('number')
                         send_restaurant = restaurant_serializer.data.get('name')
                         
-                        bot.send_message(message.chat.id, f'Ресторан: {send_restaurant}\nНомер: {table_number}\nВремя брони: {datetime.fromisoformat(reserved_time).strftime("%Y-%m-%d %H:%M:%S")}')
+                        bot.send_message(message.chat.id, f'Ресторан: {send_restaurant}\nНомер: {table_number}\nВремя брони: {datetime.fromisoformat(reserved_time).strftime("%Y-%m-%d %H:%M")}')
                 else:
                     bot.send_message(message.chat.id, 'У вас не забронированы столики')
             else:

@@ -229,3 +229,6 @@ def create_tables(sender, instance, created, **kwargs):
 def create_cart(sender, instance, created, **kwargs):
     if created:
         Cart.objects.create(person=instance)
+
+
+

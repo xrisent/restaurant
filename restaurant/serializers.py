@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import *
+from .models import Type, Table, Restaurant, Review, Dish, Drink, Cart, Category
 
 
 class TypeSerializer(serializers.ModelSerializer):
