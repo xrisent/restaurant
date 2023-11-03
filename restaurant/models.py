@@ -105,6 +105,8 @@ class Table(models.Model):
     reserved_by = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     reserved_time = models.DateTimeField(null=True, blank=True, help_text='Write here time when you will come')
     dishes = models.ManyToManyField(Dish)
+    drinks = models.ManyToManyField(Drink)
+    d = models.CharField(max_length=250, null=True, blank=True)
 
     def __str__(self) -> str:
         return f'{self.number} in {self.restaurant} by {self.reserved_by}'
@@ -188,7 +190,22 @@ class Cart(models.Model):
         
         self.calculate_total_price()
         self.save()
-         
+
+    def transfer_cart(self, table_id):
+
+        table = Table.objects.get(id=table_id)
+        
+        for dish in self.dishes.all():
+            table.dishes.add(dish)
+        for drink in self.drinks.all():
+            table.drinks.add(drink)
+
+        self.dishes.clear()
+        self.drinks.clear()
+
+        table.save()
+        self.calculate_total_price()
+        self.save()
 
 
     class Meta:

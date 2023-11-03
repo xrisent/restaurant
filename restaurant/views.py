@@ -160,5 +160,26 @@ def update_cart(request):
             cart.remove_object_cart(dish=dish_id, drink=drink_id)
 
             return JsonResponse({'message': 'Removed from cart successfully'})
+        
+        elif action == 'transfer':
+
+            person_id = request.POST.get('person_id')
+            table_id = request.POST.get('table_id')
+
+            try:
+                Table.objects.get(id=table_id)
+            except Table.DoesNotExist:
+                return JsonResponse({'error': 'Table not found'}, status=404)
+            
+            try:
+                person = Person.objects.get(pk=person_id)
+            except Person.DoesNotExist:
+                return JsonResponse({'error': 'Person not found'}, status=404)
+            
+            cart = Cart.objects.get(person=person)
+
+            cart.transfer_cart(table_id=table_id)
+
+            return JsonResponse({'message': 'transfer made successfully'})
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)

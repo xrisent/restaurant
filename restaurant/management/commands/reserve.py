@@ -15,7 +15,7 @@ def reserved_tables():
         persons = Person.objects.filter(id=table.reserved_by.id)
         for person in persons:
             if datetime.now().replace(second=0, microsecond=0) == table.reserved_time.replace(second=0, tzinfo=None) + timedelta(hours=3):
-                bot.send_message(person.tg_id, f'Вы забронировали стол номер {table.number} в ресторане {table.restaurant.name} на {table.reserved_time.strftime("%Y-%m-%d %H:%M")}')
+                bot.send_message(person.tg_id, f'Напоминаю! Вы забронировали стол номер {table.number} в ресторане {table.restaurant.name} на {table.reserved_time.strftime("%Y-%m-%d %H:%M")}.')
         
 
 schedule.every().minute.do(reserved_tables)
