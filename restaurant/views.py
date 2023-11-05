@@ -117,6 +117,7 @@ def update_cart(request):
             person_id = request.POST.get('person_id')
             dish_id = request.POST.get('dish_id')
             drink_id = request.POST.get('drink_id')
+            restaurant_id = request.POST.get('restaurant_id')
 
             try:
                 person = Person.objects.get(pk=person_id)
@@ -125,7 +126,7 @@ def update_cart(request):
 
             cart, created = Cart.objects.get_or_create(person=person)
             
-            cart.add_cart(dish=dish_id, drink=drink_id)
+            cart.add_cart(dish=dish_id, drink=drink_id, restaurant=restaurant_id)
 
             return JsonResponse({'message': 'Cart updated successfully'})
 

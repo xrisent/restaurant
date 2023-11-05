@@ -1,6 +1,6 @@
 from django.db import models
 from user_auth.models import Person
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 
 
@@ -76,6 +76,7 @@ class Restaurant(models.Model):
     owner = models.ForeignKey(Person, on_delete=models.CASCADE)
     rating = models.IntegerField(default=0)
     plan = models.ImageField(upload_to='plans/', null=True, blank=True)
+    viewbox = models.CharField(max_length=150, null=True, blank=True, help_text='Need for plan')
 
     # Возвращает количество свободных столов
     def get_available_tables(self):
@@ -106,7 +107,7 @@ class Table(models.Model):
     reserved_time = models.DateTimeField(null=True, blank=True, help_text='Write here time when you will come')
     dishes = models.ManyToManyField(Dish)
     drinks = models.ManyToManyField(Drink)
-    d = models.CharField(max_length=250, null=True, blank=True)
+    d = models.CharField(max_length=250, null=True, blank=True, help_text='Need for plan')
 
     def __str__(self) -> str:
         return f'{self.number} in {self.restaurant} by {self.reserved_by}'
@@ -121,6 +122,7 @@ class Cart(models.Model):
     dishes = models.ManyToManyField(Dish)
     drinks = models.ManyToManyField(Drink)
     total_price = models.PositiveIntegerField(default=0)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self) -> str:
         return f'{self.person}'
@@ -139,29 +141,20 @@ class Cart(models.Model):
         self.save()
     
     # Добавление dish и drink к существующему
-    def add_cart(self, dish, drink):
-        if dish is not None and dish not in self.drinks.all():
-            self.dishes.add(dish)
+    def add_cart(self, dish, drink, restaurant):
+        if dish is not None and dish not in self.dishes.all():
+            if not self.dishes.exists():
+                self.restaurant_id = restaurant
+                self.dishes.add(dish)
+            elif restaurant == self.restaurant_id:
+                self.dishes.add(dish)
 
         if drink is not None and drink not in self.drinks.all():
-            self.drinks.add(drink)
-
-        # if dish is not None and drink is not None:
-        #     if dish not in self.dishes.all():
-        #         self.dishes.add(dish)
-
-        #     if drink not in self.drinks.all():
-        #         self.drinks.add(drink)
-                
-        # elif dish is not None and drink is None:
-
-        #     if dish not in self.dishes.all():
-        #         self.dishes.add(dish)
-
-        # elif dish is None and drink is not None:
-
-        #     if drink not in self.drinks.all():
-        #         self.drinks.add(drink)
+            if not self.drinks.exists():
+                self.restaurant_id = restaurant
+                self.drinks.add(drink)
+            elif restaurant == self.restaurant_id:
+                self.drinks.add(drink)
 
         self.calculate_total_price()
         self.save()
@@ -187,6 +180,7 @@ class Cart(models.Model):
 
         self.dishes.clear()
         self.drinks.clear()
+        self.restaurant = None
         
         self.calculate_total_price()
         self.save()
@@ -202,6 +196,7 @@ class Cart(models.Model):
 
         self.dishes.clear()
         self.drinks.clear()
+        self.restaurant = None
 
         table.save()
         self.calculate_total_price()
@@ -241,11 +236,10 @@ def create_tables(sender, instance, created, **kwargs):
             Table.objects.create(restaurant=instance, number=table_number)
 
 
-
+# Создает Cart связанный с Person
 @receiver(post_save, sender=Person)
 def create_cart(sender, instance, created, **kwargs):
     if created:
         Cart.objects.create(person=instance)
-
 
 
