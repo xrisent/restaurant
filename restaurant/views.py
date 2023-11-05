@@ -21,8 +21,10 @@ class RestaurantViewSetView(viewsets.ModelViewSet):
         instance = self.get_object()
 
         instance.update_rating()
+        available_tables = instance.get_available_tables()
 
         serializer = self.get_serializer(instance)
+        serializer.data['available_tables'] = available_tables
         return Response(serializer.data)
     
 
@@ -35,8 +37,11 @@ class RestaurantViewSetCreate(viewsets.ModelViewSet):
         instance = self.get_object()
 
         instance.update_rating()
+        available_tables = instance.get_available_tables()
+
 
         serializer = self.get_serializer(instance)
+        serializer.data['available_tables'] = available_tables
         return Response(serializer.data)
 
 

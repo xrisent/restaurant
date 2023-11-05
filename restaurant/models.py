@@ -1,7 +1,8 @@
 from django.db import models
 from user_auth.models import Person
-from django.db.models.signals import post_save, m2m_changed
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django.http import JsonResponse
 
 
 class Type(models.Model):
@@ -143,19 +144,20 @@ class Cart(models.Model):
     # Добавление dish и drink к существующему
     def add_cart(self, dish, drink, restaurant):
         if dish is not None and dish not in self.dishes.all():
-            if not self.dishes.exists():
+            if self.restaurant is None:
                 self.restaurant_id = restaurant
                 self.dishes.add(dish)
-            elif restaurant == self.restaurant_id:
+            elif int(restaurant) == int(self.restaurant_id):
                 self.dishes.add(dish)
 
         if drink is not None and drink not in self.drinks.all():
-            if not self.drinks.exists():
+            if self.restaurant is None:
                 self.restaurant_id = restaurant
                 self.drinks.add(drink)
-            elif restaurant == self.restaurant_id:
+            elif int(restaurant) == int(self.restaurant_id):
                 self.drinks.add(drink)
 
+        self.save()
         self.calculate_total_price()
         self.save()
 
@@ -227,6 +229,7 @@ class Review(models.Model):
         verbose_name_plural = 'Reviews'
 
 
+
 # Создает Tables, которое указано в ресторане, дабы мы могли дальше их забронировать
 @receiver(post_save, sender=Restaurant)
 def create_tables(sender, instance, created, **kwargs):
@@ -243,3 +246,16 @@ def create_cart(sender, instance, created, **kwargs):
         Cart.objects.create(person=instance)
 
 
+# Проверяет, чтобы Person не зарезервировал более 2 столов одного ресторана
+@receiver(pre_save, sender=Table)
+def check_table_reservation(sender, instance, **kwargs):
+    if instance.reserved_by is not None:
+        reservations_count = Table.objects.filter(restaurant=instance.restaurant, reserved_by=instance.reserved_by).count()
+        if reservations_count >= 2:
+            response_data = {'message': "Person can only reserve up to 2 tables in the same restaurant."}
+            instance.is_reserved = False
+            instance.reserved_by = None
+            instance.reserved_time = None
+            instance.dishes.clear()
+            instance.drinks.clear()
+            return JsonResponse(response_data, status=400)

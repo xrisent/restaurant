@@ -18,6 +18,8 @@ class Person(models.Model):
     def __str__(self):
         return f'{self.id}: {self.name}'
     
+    def generate_tg_code(self):
+        return int(''.join(str(randint(0, 9)) for _ in range(4)))
     
     class Meta:
         verbose_name = 'Person'

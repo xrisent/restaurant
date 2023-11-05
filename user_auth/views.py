@@ -41,8 +41,11 @@ class CurrentUserView(APIView):
         except Person.DoesNotExist:
             person_data = None
 
-        reserved_tables = Table.objects.filter(reserved_by=person)
-        reserved_tables_data = TableSerializer(reserved_tables, many=True).data
+        if person_data is None:
+            reserved_tables = None
+        else:
+            reserved_tables = Table.objects.filter(reserved_by=person)
+            reserved_tables_data = TableSerializer(reserved_tables, many=True).data
 
 
         response_data = {
