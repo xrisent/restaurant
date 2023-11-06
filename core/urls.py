@@ -31,6 +31,7 @@ urlpatterns = [
     # apps
     path('api/v1/user_auth/', include('user_auth.urls')),
     path('api/v1/restaurant/', include('restaurant.urls')),
+    path('api/v1/payment/', include('payments.urls')),
 
     # swagger
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
