@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # Custom Apps
     'user_auth',
     'restaurant',
+    'payments',
 
     # Libraries
     'rest_framework',

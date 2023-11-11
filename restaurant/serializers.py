@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Type, Table, Restaurant, Review, Dish, Drink, Cart, Category
 
+from user_auth.serializers import PersonSerializer
+
 
 class TypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,7 +34,15 @@ class TableSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ReviewSerializer(serializers.ModelSerializer):
+class ReviewSerializerCreate(serializers.ModelSerializer): 
+    class Meta:
+        model = Review
+        fields = '__all__'
+        
+
+class ReviewSerializerView(serializers.ModelSerializer):
+    person = PersonSerializer() 
+
     class Meta:
         model = Review
         fields = '__all__'
@@ -78,18 +88,27 @@ class DishSerializerView(serializers.ModelSerializer):
 
 
 class RestaurantSerializerView(serializers.ModelSerializer):
-    available_tables = serializers.SerializerMethodField()
-    rating = serializers.SerializerMethodField()
-    dishes = DishSerializerView(many=True, read_only=True)
-    drinks = DrinkSerializer(many=True, read_only=True)
-    type = TypeSerializer(many=True, read_only=True)
+  available_tables = serializers.SerializerMethodField()
+  rating = serializers.SerializerMethodField()
+  dishes = DishSerializerView(many=True, read_only=True)
+  drinks = DrinkSerializer(many=True, read_only=True)
+  type = TypeSerializer(many=True, read_only=True)
+  reviews = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Restaurant
-        fields = '__all__'
+  class Meta:
+      model = Restaurant
+      fields = '__all__'
 
-    def get_available_tables(self, obj):
-        return obj.get_available_tables()
+  def __init__(self, *args, **kwargs):
+      reviews = kwargs.pop('reviews', [])
+      super(RestaurantSerializerView, self).__init__(*args, **kwargs)
+      self.reviews_data = reviews
 
-    def get_rating(self, obj):
-        return obj.rating
+  def get_available_tables(self, obj):
+      return obj.get_available_tables()
+
+  def get_rating(self, obj):
+      return obj.rating
+
+  def get_reviews(self, obj):
+      return ReviewSerializerView(self.reviews_data, many=True).data

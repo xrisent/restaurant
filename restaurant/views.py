@@ -13,19 +13,25 @@ from .serializers import *
 
 
 class RestaurantViewSetView(viewsets.ModelViewSet):
-    queryset = Restaurant.objects.all()
-    serializer_class = RestaurantSerializerView
-    permission_classes = [IsAuthenticated]
+  queryset = Restaurant.objects.all()
+  serializer_class = RestaurantSerializerView
+  permission_classes = [IsAuthenticated]
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
+  def retrieve(self, request, *args, **kwargs):
+      instance = self.get_object()
 
-        instance.update_rating()
-        available_tables = instance.get_available_tables()
+      instance.update_rating()
+      available_tables = instance.get_available_tables()
 
-        serializer = self.get_serializer(instance)
-        serializer.data['available_tables'] = available_tables
-        return Response(serializer.data)
+      reviews = Review.objects.filter(restaurant=instance)
+      review_serializer = ReviewSerializerView(reviews, many=True)
+
+      serializer = self.get_serializer(instance, reviews=reviews)
+
+      serializer.data['available_tables'] = available_tables
+
+
+      return Response(serializer.data)
     
 
 class RestaurantViewSetCreate(viewsets.ModelViewSet):
@@ -77,7 +83,7 @@ class TableViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
-    serializer_class = ReviewSerializer
+    serializer_class = ReviewSerializerCreate
     permission_classes = [IsAuthenticated]
 
 

@@ -31,7 +31,8 @@ def start_bot(message):
     item1 = types.KeyboardButton('Покажи забронированные столики')
     item2 = types.KeyboardButton('Мой аккаунт')
     item3 = types.KeyboardButton('Привязать мой аккаунт')
-    markup.add(item1, item2, item3)
+    item4 = types.KeyboardButton('Отвязать этот аккаунт')
+    markup.add(item1, item2, item3, item4)
     bot.send_message(message.chat.id, f'Здравствуйте, {message.from_user.first_name}! Я бот для финального проекта команды "Лигма".', reply_markup=markup)
 
 
@@ -97,4 +98,14 @@ def main(message):
                     bot.send_message(message.chat.id, 'У вас не забронированы столики')
             else:
                 bot.send_message(message.chat.id, 'Пользователь не найден')
+
+        if message.text == 'Отвязать этот аккаунт':
+            person = Person.objects.filter(tg_id=message.chat.id).first()
+            if person:
+                person.tg_id = None
+                person.save()
+                bot.send_message(message.chat.id, 'Аккаунт успешно отвязан')
+            else:
+                bot.send_message(message.chat.id, 'Аккаунт не привязан')
+
 

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Payment</title>
+</head>
+<body>
+    <h2>Create Payment</h2>
+    <form method="post" action="{% url 'create_payment' %}">
+        {% csrf_token %}
+        <label for="amount">Amount:</label>
+        <input type="number" name="amount" required>
+        <label for="payment_method_id">Payment method:</label>
+        <input type="text" name="payment_method_id" required>
+        <button type="submit">Create Payment</button>
+    </form>
+</body>
+</html>
