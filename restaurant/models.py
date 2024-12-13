@@ -106,8 +106,8 @@ class Table(models.Model):
     is_reserved = models.BooleanField(default=False)
     reserved_by = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     reserved_time = models.DateTimeField(null=True, blank=True, help_text='Write here time when you will come')
-    dishes = models.ManyToManyField(Dish)
-    drinks = models.ManyToManyField(Drink)
+    dishes = models.ManyToManyField(Dish, blank=True)
+    drinks = models.ManyToManyField(Drink, blank=True)
     d = models.CharField(max_length=250, null=True, blank=True, help_text='Need for plan')
 
     def __str__(self) -> str:
@@ -149,6 +149,8 @@ class Cart(models.Model):
                 self.dishes.add(dish)
             elif int(restaurant) == int(self.restaurant_id):
                 self.dishes.add(dish)
+            else:
+                return 'Error'
 
         if drink is not None and drink not in self.drinks.all():
             if self.restaurant is None:
@@ -156,6 +158,8 @@ class Cart(models.Model):
                 self.drinks.add(drink)
             elif int(restaurant) == int(self.restaurant_id):
                 self.drinks.add(drink)
+            else:
+                return 'Error'
 
         self.save()
         self.calculate_total_price()

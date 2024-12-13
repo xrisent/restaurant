@@ -101,21 +101,29 @@ class CartViewSetCreate(viewsets.ModelViewSet):
 
         return queryset
 
-    
 
 class CartViewSetView(viewsets.ModelViewSet):
     serializer_class = CartSerializerView
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        queryset = Cart.objects.filter(person__user=user)
+        # Short-circuit for schema generation
+        if getattr(self, 'swagger_fake_view', False):
+            return Cart.objects.none()
 
+        user = self.request.user
+
+        # Ensure user is authenticated
+        if not user.is_authenticated:
+            return Cart.objects.none()
+
+        queryset = Cart.objects.filter(person__user=user)
 
         for cart in queryset:
             cart.calculate_total_price()
 
         return queryset
+
     
 
 
@@ -137,9 +145,13 @@ def update_cart(request):
 
             cart, created = Cart.objects.get_or_create(person=person)
             
-            cart.add_cart(dish=dish_id, drink=drink_id, restaurant=restaurant_id)
+            result = cart.add_cart(dish=dish_id, drink=drink_id, restaurant=restaurant_id)
 
-            return JsonResponse({'message': 'Cart updated successfully'})
+            if result == 'Error':
+                return JsonResponse({'message': 'Restaurant and dish or drinks are not from the same restaurant'})
+            else:
+                return JsonResponse({'message': 'Cart updated successfully'})
+
 
         elif action == 'clear':
 
