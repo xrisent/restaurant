@@ -1,8 +1,9 @@
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from rest_framework.exceptions import PermissionDenied
 
 
 
@@ -15,7 +16,7 @@ from .serializers import *
 class RestaurantViewSetView(viewsets.ModelViewSet):
   queryset = Restaurant.objects.all()
   serializer_class = RestaurantSerializerView
-  permission_classes = [IsAuthenticated]
+  permission_classes = [AllowAny]
 
   def retrieve(self, request, *args, **kwargs):
       instance = self.get_object()
@@ -54,25 +55,25 @@ class RestaurantViewSetCreate(viewsets.ModelViewSet):
 class TypeViewSet(viewsets.ModelViewSet):
     queryset = Type.objects.all()
     serializer_class = TypeSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
 class DishViewSet(viewsets.ModelViewSet):
     queryset = Dish.objects.all()
     serializer_class = DishSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
 class DrinkViewSet(viewsets.ModelViewSet):
     queryset = Drink.objects.all()
     serializer_class = DrinkSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
 class TableViewSet(viewsets.ModelViewSet):
@@ -84,7 +85,7 @@ class TableViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializerCreate
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
 class CartViewSetCreate(viewsets.ModelViewSet):
@@ -92,25 +93,36 @@ class CartViewSetCreate(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        queryset = Cart.objects.filter(person__user=user)
+        if getattr(self, 'swagger_fake_view', False):
+            return Cart.objects.none()  # Return an empty queryset for schema generation
 
+        user = self.request.user
+
+        if not user.is_authenticated:
+            raise PermissionDenied("You must be logged in to access this data.")
+
+        queryset = Cart.objects.filter(person__user=user)
 
         for cart in queryset:
             cart.calculate_total_price()
 
         return queryset
 
-    
 
 class CartViewSetView(viewsets.ModelViewSet):
     serializer_class = CartSerializerView
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        queryset = Cart.objects.filter(person__user=user)
+        if getattr(self, 'swagger_fake_view', False):
+            return Cart.objects.none()  # Return an empty queryset for schema generation
 
+        user = self.request.user
+
+        if not user.is_authenticated:
+            raise PermissionDenied("You must be logged in to view this data.")
+
+        queryset = Cart.objects.filter(person__user=user)
 
         for cart in queryset:
             cart.calculate_total_price()

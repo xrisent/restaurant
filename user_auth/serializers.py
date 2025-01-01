@@ -9,7 +9,8 @@ class PersonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Person
-        fields = '__all__'
+        fields = ['id', 'photo', 'name', 'email', 'number', 'tg_id', 'tg_code', 'user']
+        read_only_fields = ['id', 'user']
 
 
 class UserSerializer(serializers.ModelSerializer):

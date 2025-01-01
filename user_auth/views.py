@@ -5,6 +5,10 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from restaurant.models import Table
 from restaurant.serializers import TableSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import status
+from .models import Person
+from .serializers import PersonSerializer
 
 
 from .models import *
@@ -41,12 +45,11 @@ class CurrentUserView(APIView):
         except Person.DoesNotExist:
             person_data = None
 
-        if person_data is None:
-            reserved_tables = None
-        else:
+        reserved_tables_data = None 
+
+        if person_data is not None:
             reserved_tables = Table.objects.filter(reserved_by=person)
             reserved_tables_data = TableSerializer(reserved_tables, many=True).data
-
 
         response_data = {
             'user_data': user_data,
@@ -55,4 +58,24 @@ class CurrentUserView(APIView):
         }
 
         return Response(response_data)
+
+
+class UploadPhotoView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, pk):
+        try:
+            person = Person.objects.get(pk=pk, user=request.user)
+        except Person.DoesNotExist:
+            return Response({"detail": "Person not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if 'photo' not in request.FILES:
+            return Response({"detail": "No photo provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        person.photo = request.FILES['photo']
+        person.save()
+        serializer = PersonSerializer(person)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     

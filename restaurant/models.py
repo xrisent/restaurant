@@ -68,6 +68,7 @@ class Restaurant(models.Model):
     name = models.CharField(max_length=150, help_text='Write here name of the restaurant')
     description = models.TextField(help_text='Write here description of the restaurant', null=True, blank=True)
     photo_1 = models.ImageField(upload_to='restaurants/', null=True, blank=True)
+    photo_2 = models.ImageField(upload_to='restaurants/', null=True, blank=True)
     type = models.ManyToManyField(Type)
     dishes = models.ManyToManyField(Dish)
     drinks = models.ManyToManyField(Drink)
@@ -259,3 +260,8 @@ def check_table_reservation(sender, instance, **kwargs):
             instance.dishes.clear()
             instance.drinks.clear()
             return JsonResponse(response_data, status=400)
+
+
+@receiver(pre_save, sender=Table)
+def pre_save_table(sender, instance, **kwargs):
+    print(f"About to save table {instance.number}")
