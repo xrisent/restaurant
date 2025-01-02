@@ -7,8 +7,6 @@ from rest_framework.exceptions import PermissionDenied
 
 
 
-
-
 from .models import *
 from .serializers import *
 
@@ -19,20 +17,21 @@ class RestaurantViewSetView(viewsets.ModelViewSet):
   permission_classes = [AllowAny]
 
   def retrieve(self, request, *args, **kwargs):
-      instance = self.get_object()
+    instance = self.get_object()
 
-      instance.update_rating()
-      available_tables = instance.get_available_tables()
+    instance.update_rating()
+    available_tables = instance.get_available_tables()
 
-      reviews = Review.objects.filter(restaurant=instance)
-      review_serializer = ReviewSerializerView(reviews, many=True)
+    reviews = Review.objects.filter(restaurant=instance)
+    review_serializer = ReviewSerializerView(reviews, many=True)
 
-      serializer = self.get_serializer(instance, reviews=reviews)
+    serializer = self.get_serializer(instance)
+    serializer.data['available_tables'] = available_tables
 
-      serializer.data['available_tables'] = available_tables
+    # Optionally include reviews if needed, but it's already part of the serializer
+    serializer.data['reviews'] = review_serializer.data
 
-
-      return Response(serializer.data)
+    return Response(serializer.data)
     
 
 class RestaurantViewSetCreate(viewsets.ModelViewSet):
@@ -88,13 +87,19 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
 
 
+class CartItemView(viewsets.ModelViewSet):
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
+    permission_classes = [IsAuthenticated]
+
+
 class CartViewSetCreate(viewsets.ModelViewSet):
     serializer_class = CartSerializerCreate
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
-            return Cart.objects.none()  # Return an empty queryset for schema generation
+            return Cart.objects.none()  # For schema generation
 
         user = self.request.user
 
@@ -115,7 +120,7 @@ class CartViewSetView(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
-            return Cart.objects.none()  # Return an empty queryset for schema generation
+            return Cart.objects.none()  # For schema generation
 
         user = self.request.user
 
@@ -140,6 +145,7 @@ def update_cart(request):
             person_id = request.POST.get('person_id')
             dish_id = request.POST.get('dish_id')
             drink_id = request.POST.get('drink_id')
+            quantity = int(request.POST.get('quantity', 1))
             restaurant_id = request.POST.get('restaurant_id')
 
             try:
@@ -148,13 +154,12 @@ def update_cart(request):
                 return JsonResponse({'error': 'Person not found'}, status=404)
 
             cart, created = Cart.objects.get_or_create(person=person)
-            
-            cart.add_cart(dish=dish_id, drink=drink_id, restaurant=restaurant_id)
+
+            cart.add_cart(dish_id=dish_id, drink_id=drink_id, restaurant_id=restaurant_id, quantity=quantity)
 
             return JsonResponse({'message': 'Cart updated successfully'})
 
         elif action == 'clear':
-
             person_id = request.POST.get('person_id')
 
             try:
@@ -167,26 +172,25 @@ def update_cart(request):
             cart.clear_cart()
 
             return JsonResponse({'message': 'Cart cleared successfully'})
-        
-        elif action == 'remove':
 
+        elif action == 'remove':
             person_id = request.POST.get('person_id')
             dish_id = request.POST.get('dish_id')
             drink_id = request.POST.get('drink_id')
+            quantity = int(request.POST.get('quantity', 1))
 
             try:
                 person = Person.objects.get(pk=person_id)
             except Person.DoesNotExist:
                 return JsonResponse({'error': 'Person not found'}, status=404)
-            
+
             cart = Cart.objects.get(person=person)
 
-            cart.remove_object_cart(dish=dish_id, drink=drink_id)
+            cart.remove_from_cart(dish_id=dish_id, drink_id=drink_id, quantity=quantity)
 
             return JsonResponse({'message': 'Removed from cart successfully'})
-        
-        elif action == 'transfer':
 
+        elif action == 'transfer':
             person_id = request.POST.get('person_id')
             table_id = request.POST.get('table_id')
 
@@ -194,16 +198,16 @@ def update_cart(request):
                 Table.objects.get(id=table_id)
             except Table.DoesNotExist:
                 return JsonResponse({'error': 'Table not found'}, status=404)
-            
+
             try:
                 person = Person.objects.get(pk=person_id)
             except Person.DoesNotExist:
                 return JsonResponse({'error': 'Person not found'}, status=404)
-            
+
             cart = Cart.objects.get(person=person)
 
             cart.transfer_cart(table_id=table_id)
 
-            return JsonResponse({'message': 'transfer made successfully'})
+            return JsonResponse({'message': 'Transfer made successfully'})
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)

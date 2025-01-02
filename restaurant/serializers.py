@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Type, Table, Restaurant, Review, Dish, Drink, Cart, Category
+from .models import Type, Table, Restaurant, Review, Dish, Drink, Cart, Category, CartItem
 
 from user_auth.serializers import PersonSerializer
 
@@ -48,24 +48,36 @@ class ReviewSerializerView(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CartItemSerializer(serializers.ModelSerializer):
+    dish = DishSerializer(read_only=True)
+    drink = DrinkSerializer(read_only=True)
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'cart', 'dish', 'drink', 'quantity', 'total_price']
+
+
 class CartSerializerCreate(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True, source='cartitem_set')
+
     class Meta:
         model = Cart
-        fields = '__all__'
+        fields = ['id', 'person', 'items', 'total_price']
 
 
 class CartSerializerView(serializers.ModelSerializer):
-    dishes = DishSerializer(many=True, read_only=True)
-    drinks = DrinkSerializer(many=True, read_only=True)
-    
+    items = CartItemSerializer(many=True, read_only=True, source='cartitem_set')
+    person = PersonSerializer(read_only=True)
+
     class Meta:
         model = Cart
-        fields = '__all__'
+        fields = ['id', 'person', 'items', 'total_price']
+
 
 
 class RestaurantSerializerCreate(serializers.ModelSerializer):
     available_tables = serializers.SerializerMethodField()
-    rating = serializers.SerializerMethodField()
+    rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Restaurant
@@ -73,9 +85,6 @@ class RestaurantSerializerCreate(serializers.ModelSerializer):
 
     def get_available_tables(self, obj):
         return obj.get_available_tables()
-
-    def get_rating(self, obj):
-        return obj.rating
     
 
 class DishSerializerView(serializers.ModelSerializer):
@@ -88,27 +97,16 @@ class DishSerializerView(serializers.ModelSerializer):
 
 
 class RestaurantSerializerView(serializers.ModelSerializer):
-  available_tables = serializers.SerializerMethodField()
-  rating = serializers.SerializerMethodField()
-  dishes = DishSerializerView(many=True, read_only=True)
-  drinks = DrinkSerializer(many=True, read_only=True)
-  type = TypeSerializer(many=True, read_only=True)
-  reviews = serializers.SerializerMethodField()
+    available_tables = serializers.SerializerMethodField()
+    rating = serializers.FloatField(read_only=True)
+    dishes = DishSerializerView(many=True, read_only=True)
+    drinks = DrinkSerializer(many=True, read_only=True)
+    type = TypeSerializer(many=True, read_only=True)
+    reviews = ReviewSerializerView(many=True, read_only=True)
 
-  class Meta:
-      model = Restaurant
-      fields = '__all__'
+    class Meta:
+        model = Restaurant
+        fields = '__all__'
 
-  def __init__(self, *args, **kwargs):
-      reviews = kwargs.pop('reviews', [])
-      super(RestaurantSerializerView, self).__init__(*args, **kwargs)
-      self.reviews_data = reviews
-
-  def get_available_tables(self, obj):
-      return obj.get_available_tables()
-
-  def get_rating(self, obj):
-      return obj.rating
-
-  def get_reviews(self, obj):
-      return ReviewSerializerView(self.reviews_data, many=True).data
+    def get_available_tables(self, obj):
+        return obj.get_available_tables()

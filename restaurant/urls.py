@@ -14,6 +14,7 @@ router.register(r'table', views.TableViewSet)
 router.register(r'review', views.ReviewViewSet)
 router.register(r'cart_view', views.CartViewSetView, basename='cart_view')
 router.register(r'cart_create', views.CartViewSetCreate, basename='cart_create')
+router.register(r'cart_items', views.CartItemView)
 
 
 urlpatterns = [

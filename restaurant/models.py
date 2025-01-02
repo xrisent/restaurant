@@ -121,94 +121,118 @@ class Table(models.Model):
 
 class Cart(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
-    dishes = models.ManyToManyField(Dish)
-    drinks = models.ManyToManyField(Drink)
     total_price = models.PositiveIntegerField(default=0)
     restaurant = models.ForeignKey(Restaurant, on_delete=models.SET_NULL, null=True, blank=True)
 
-    def __str__(self) -> str:
+    def get_items(self):
+        return self.cartitem_set.all()
+
+    def calculate_total_price(self):
+        self.total_price = sum(item.total_price for item in self.cartitem_set.all())
+        self.save()
+
+    def __str__(self):
         return f'{self.person}'
     
-    # Высчитывание стоимости корзины
-    def calculate_total_price(self):
-        total_price = 0
-
-        for dish in self.dishes.all():
-            total_price += dish.price
-
-        for drink in self.drinks.all():
-            total_price += drink.price
-
-        self.total_price = total_price
-        self.save()
-    
-    # Добавление dish и drink к существующему
-    def add_cart(self, dish, drink, restaurant):
-        if dish is not None and dish not in self.dishes.all():
-            if self.restaurant is None:
-                self.restaurant_id = restaurant
-                self.dishes.add(dish)
-            elif int(restaurant) == int(self.restaurant_id):
-                self.dishes.add(dish)
-
-        if drink is not None and drink not in self.drinks.all():
-            if self.restaurant is None:
-                self.restaurant_id = restaurant
-                self.drinks.add(drink)
-            elif int(restaurant) == int(self.restaurant_id):
-                self.drinks.add(drink)
-
-        self.save()
-        self.calculate_total_price()
-        self.save()
-
-    # Удаление объекта
-    def remove_object_cart(self, dish, drink):
-
-        dish_in_list = self.dishes.filter(pk=dish).exists()
-
-        drink_in_list = self.drinks.filter(pk=drink).exists()
-
-        if dish_in_list:
-            self.dishes.remove(dish)
-
-        if drink_in_list:
-            self.drinks.remove(drink)
-
-        self.calculate_total_price()
-        self.save()
-
-    # Очищение корзины
-    def clear_cart(self):
-
-        self.dishes.clear()
-        self.drinks.clear()
-        self.restaurant = None
-        
-        self.calculate_total_price()
-        self.save()
-
-    def transfer_cart(self, table_id):
-
-        table = Table.objects.get(id=table_id)
-        
-        for dish in self.dishes.all():
-            table.dishes.add(dish)
-        for drink in self.drinks.all():
-            table.drinks.add(drink)
-
-        self.dishes.clear()
-        self.drinks.clear()
-        self.restaurant = None
-
-        table.save()
-        self.calculate_total_price()
-        self.save()
-
-
     class Meta:
         verbose_name = 'Cart'
         verbose_name_plural = 'Carts'
+    
+    # Добавление dish и drink к существующему
+    def add_cart(self, dish_id=None, drink_id=None, quantity=1, restaurant_id=None):
+        if restaurant_id:
+            self.restaurant = Restaurant.objects.get(id=restaurant_id)
+
+        if not self.restaurant:
+            raise ValueError("Restaurant must be set.")
+
+        if dish_id:
+            dish = Dish.objects.get(id=dish_id)
+        else:
+            dish = None
+
+        if drink_id:
+            drink = Drink.objects.get(id=drink_id)
+        else:
+            drink = None
+
+        if not (dish or drink):
+            raise ValueError("At least a dish or a drink must be provided.")
+
+        item, created = CartItem.objects.get_or_create(
+            cart=self,
+            dish=dish,
+            drink=drink,
+            defaults={'quantity': quantity}
+        )
+
+        if not created:
+            item.quantity += quantity
+            item.save()
+
+        self.calculate_total_price()
+
+    # Удаление объекта
+    def remove_from_cart(self, dish_id=None, drink_id=None, quantity=1):
+        try:
+            dish = Dish.objects.get(id=dish_id) if dish_id else None
+            drink = Drink.objects.get(id=drink_id) if drink_id else None
+
+            item = CartItem.objects.get(cart=self, dish=dish, drink=drink)
+            
+            if item.quantity > quantity:
+                item.quantity -= quantity
+                item.save()
+            else:
+                item.delete()
+
+            self.calculate_total_price()
+        except CartItem.DoesNotExist:
+            pass
+        except Dish.DoesNotExist:
+            pass
+        except Drink.DoesNotExist:
+            pass
+
+    def clear_cart(self):
+        self.cartitem_set.all().delete()
+        self.restaurant = None
+        self.calculate_total_price()
+
+    def transfer_cart(self, table_id):
+        table = Table.objects.get(id=table_id)
+        
+        for item in self.cartitem_set.all():
+            if item.dish:
+                for _ in range(item.quantity):
+                    table.dishes.add(item.dish)
+            elif item.drink:
+                for _ in range(item.quantity):
+                    table.drinks.add(item.drink)
+
+        # Очистка корзины после переноса
+        self.clear_cart()
+        table.save()
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    dish = models.ForeignKey(Dish, on_delete=models.CASCADE, null=True, blank=True)
+    drink = models.ForeignKey(Drink, on_delete=models.CASCADE, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=1)
+
+    @property
+    def total_price(self):
+        if self.dish:
+            return self.dish.price * self.quantity
+        return 0
+
+    def __str__(self):
+        return f"{self.dish or self.drink} x {self.quantity} in {self.cart.person}'s cart'"
+    
+    class Meta:
+        verbose_name = 'Cart Item'
+        verbose_name_plural = 'Cart Items'
 
 
 class Review(models.Model):
