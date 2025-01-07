@@ -3,7 +3,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.decorators import action
 
 
 
@@ -20,13 +21,11 @@ class RestaurantViewSetView(viewsets.ModelViewSet):
     instance = self.get_object()
 
     instance.update_rating()
-    available_tables = instance.get_available_tables()
 
     reviews = Review.objects.filter(restaurant=instance)
     review_serializer = ReviewSerializerView(reviews, many=True)
 
     serializer = self.get_serializer(instance)
-    serializer.data['available_tables'] = available_tables
 
     # Optionally include reviews if needed, but it's already part of the serializer
     serializer.data['reviews'] = review_serializer.data
@@ -43,11 +42,8 @@ class RestaurantViewSetCreate(viewsets.ModelViewSet):
         instance = self.get_object()
 
         instance.update_rating()
-        available_tables = instance.get_available_tables()
-
 
         serializer = self.get_serializer(instance)
-        serializer.data['available_tables'] = available_tables
         return Response(serializer.data)
 
 
@@ -78,6 +74,56 @@ class DrinkViewSet(viewsets.ModelViewSet):
 class TableViewSet(viewsets.ModelViewSet):
     queryset = Table.objects.all()
     serializer_class = TableSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=['post'], url_path='reserve')
+    def reserve_table(self, request, pk=None):
+        """
+        Reserve a table for a given time period.
+        """
+        table = self.get_object()
+        start_time = request.data.get("start_time")
+        duration_hours = request.data.get("duration_hours")
+        person_id = request.data.get("person_id")
+
+        if not start_time or not duration_hours or not person_id:
+            raise ValidationError("start_time, duration_hours, and person_id are required.")
+
+        start_time = datetime.fromisoformat(start_time)  # Преобразуем строку в datetime
+        duration_hours = int(duration_hours)
+
+        person = Person.objects.get(id=person_id)
+
+        # Проверка на пересечение времени
+        end_time = start_time + timedelta(hours=duration_hours)
+        reservation = Reservation(
+            table=table,
+            reserved_by=person,
+            start_time=start_time,
+            end_time=end_time
+        )
+
+        if reservation.is_overlapping():
+            raise ValidationError("The table is already reserved for this time range.")
+
+        reservation.save()
+
+        for table in Table.objects.all():
+            table.calculate_total_price()
+
+        return Response({"message": "Table reserved successfully!", "reservation": ReservationSerializer(reservation).data})
+
+
+
+class TableDishView(viewsets.ModelViewSet):
+    queryset = TableDish.objects.all()
+    serializer_class = TableDishSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class ReservationViewSet(viewsets.ModelViewSet):
+    queryset = Reservation.objects.all()
+    serializer_class = ReservationSerializer
     permission_classes = [IsAuthenticated]
 
 

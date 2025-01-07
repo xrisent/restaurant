@@ -1,12 +1,13 @@
 import json
+from datetime import datetime
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import Table
+from .models import Reservation
 
-class TableUpdateConsumer(AsyncWebsocketConsumer):
+
+class ReservationUpdateConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_group_name = 'table_updates'  # Имя группы для обновлений
-        # Добавляем клиент в группу
+        self.room_group_name = 'reservation_updates'
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
@@ -14,28 +15,30 @@ class TableUpdateConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        # Убираем клиент из группы при отключении
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
     async def receive(self, text_data):
-        # Обрабатываем сообщения, полученные от клиента WebSocket
         pass
 
     @database_sync_to_async
-    def get_table_updates(self):
-        # Получаем обновления для всех таблиц
-        tables = Table.objects.all()  # Можно фильтровать, если нужно
-        return list(tables.values())  # Возвращаем как список словарей
+    def get_reservation_updates(self):
+        reservations = Reservation.objects.all()
+        return [
+            {
+                **reservation,
+                'start_time': reservation['start_time'].isoformat() if 'start_time' in reservation else None,
+                'end_time': reservation['end_time'].isoformat() if 'end_time' in reservation else None,
+            }
+            for reservation in reservations.values()
+        ]
 
-    # Этот метод вызывается для отправки обновлений клиентам
-    async def send_table_update(self, event):
-        table_updates = await self.get_table_updates()
-        print("Sending table updates:", table_updates)  # Логируем обновления
-        # Отправляем данные клиенту через WebSocket
+    async def send_reservation_update(self, event):
+        reservation_updates = await self.get_reservation_updates()
+        print("Sending reservation updates:", reservation_updates)
         await self.send(text_data=json.dumps({
-            'type': 'table_update',
-            'data': table_updates
+            'type': 'reservation_update',
+            'data': reservation_updates
         }))

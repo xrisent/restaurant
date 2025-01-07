@@ -3,6 +3,7 @@ from user_auth.models import Person
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.http import JsonResponse
+from datetime import timedelta
 
 
 class Type(models.Model):
@@ -79,12 +80,6 @@ class Restaurant(models.Model):
     rating = models.IntegerField(default=0)
     plan = models.ImageField(upload_to='plans/', null=True, blank=True)
     viewbox = models.CharField(max_length=150, null=True, blank=True, help_text='Need for plan')
-
-    # Возвращает количество свободных столов
-    def get_available_tables(self):
-        reserved_tables_count = self.table_set.filter(is_reserved=True).count()
-        available_tables = self.table_set.count() - reserved_tables_count
-        return available_tables
     
     # Нужен для обновления рейтинга
     def update_rating(self):
@@ -101,22 +96,114 @@ class Restaurant(models.Model):
         verbose_name_plural = 'Restaurants'
     
 
+
+
 class Table(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     number = models.PositiveIntegerField()
-    is_reserved = models.BooleanField(default=False)
-    reserved_by = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, default=None)
-    reserved_time = models.DateTimeField(null=True, blank=True, help_text='Write here time when you will come')
-    dishes = models.ManyToManyField(Dish)
-    drinks = models.ManyToManyField(Drink)
+    total_price = models.PositiveIntegerField(default=0)
     d = models.CharField(max_length=250, null=True, blank=True, help_text='Need for plan')
+    
+    def get_items(self):
+        return self.tabledish_set.all()
 
     def __str__(self) -> str:
-        return f'{self.number} in {self.restaurant} by {self.reserved_by}'
-    
+        return f'{self.number} in {self.restaurant}'
+
+    def calculate_total_price(self):
+        self.total_price = sum(item.total_price for item in self.cartitem_set.all())
+        self.save()
+
     class Meta:
         verbose_name = 'Table'
         verbose_name_plural = 'Tables'
+
+    def reserve_table(self, person, start_time, duration_hours):
+        """
+        Try to reserve the table for a given time range.
+        """
+        end_time = start_time + timedelta(hours=duration_hours)
+        reservation = Reservation(
+            table=self,
+            reserved_by=person,
+            start_time=start_time,
+            end_time=end_time
+        )
+        
+        if reservation.is_overlapping():
+            return False  # If reservation overlaps with an existing one, fail.
+        else:
+            reservation.save()  # Save the reservation if no overlap.
+            return True
+
+class Reservation(models.Model):
+    table = models.ForeignKey(Table, on_delete=models.CASCADE)
+    reserved_by = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True)
+    start_time = models.DateTimeField(help_text='Start time for reservation')
+    end_time = models.DateTimeField(help_text='End time for reservation')
+
+    def __str__(self):
+        return f'Reservation for {self.table.number} from {self.start_time} to {self.end_time}'
+
+    class Meta:
+        verbose_name = 'Reservation'
+        verbose_name_plural = 'Reservations'
+        # Добавляем уникальный индекс для комбинации table, start_time, и end_time
+        unique_together = ('table', 'start_time', 'end_time')
+
+    def is_overlapping(self):   
+        """
+        Check if this reservation overlaps with any existing reservations.
+        """
+        overlapping_reservations = Reservation.objects.filter(
+            table=self.table,
+            start_time__lt=self.end_time,
+            end_time__gt=self.start_time
+        )
+        return overlapping_reservations.exists()
+
+    def clean(self):
+        """
+        Custom validation to ensure no overlapping reservations for the same table.
+        """
+        if self.is_overlapping():
+            raise ValidationError(f"Reservation for table {self.table.number} overlaps with an existing reservation.")
+
+    def save(self, *args, **kwargs):
+        """
+        Override the save method to ensure no overlapping reservations.
+        """
+        self.clean()  # Call clean method to check for overlaps
+        super().save(*args, **kwargs)
+
+# def get_default_reservation():
+#     return Reservation.objects.first()
+
+class TableDish(models.Model):
+    reservation = models.ForeignKey(
+        'Reservation',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    dish = models.ForeignKey(Dish, on_delete=models.CASCADE, null=True, blank=True)
+    drink = models.ForeignKey(Drink, on_delete=models.CASCADE, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=1)
+
+    @property
+    def total_price(self):
+        if self.dish:
+            return self.dish.price * self.quantity
+        return 0
+
+    def __str__(self):
+        if self.reservation:
+            return f"{self.dish or self.drink} x {self.quantity} in {self.reservation.table.number}"
+        return f"{self.dish or self.drink} x {self.quantity}"
+
+    class Meta:
+        verbose_name = 'Table dish'
+        verbose_name_plural = 'Table dishes'
 
 
 class Cart(models.Model):
@@ -199,19 +286,26 @@ class Cart(models.Model):
         self.restaurant = None
         self.calculate_total_price()
 
-    def transfer_cart(self, table_id):
-        table = Table.objects.get(id=table_id)
-        
+    def transfer_cart(self, reservation_id):
+        reservation = Reservation.objects.get(id=reservation_id)
+
         for item in self.cartitem_set.all():
             if item.dish:
-                for _ in range(item.quantity):
-                    table.dishes.add(item.dish)
-            elif item.drink:
-                for _ in range(item.quantity):
-                    table.drinks.add(item.drink)
+                TableDish.objects.create(
+                    reservation=reservation,
+                    dish=item.dish,
+                    quantity=item.quantity
+                )
 
-        # Очистка корзины после переноса
+            if item.drink:
+                TableDish.objects.create(
+                    reservation=reservation,
+                    drink=item.drink,
+                    quantity=item.quantity
+                )
+
         self.clear_cart()
+
         table.save()
 
 
@@ -271,11 +365,14 @@ def create_cart(sender, instance, created, **kwargs):
         Cart.objects.create(person=instance)
 
 
-# Проверяет, чтобы Person не зарезервировал более 2 столов одного ресторана
 @receiver(pre_save, sender=Table)
 def check_table_reservation(sender, instance, **kwargs):
+    """
+    Проверяет, чтобы человек не зарезервировал более 2 столов в одном ресторане.
+    Если ограничения нарушены, отменяет бронирование.
+    """
     if instance.reserved_by is not None:
-        reservations_count = Table.objects.filter(restaurant=instance.restaurant, reserved_by=instance.reserved_by).count()
+        reservations_count = Reservation.objects.filter(table__restaurant=instance.restaurant, reserved_by=instance.reserved_by).count()
         if reservations_count >= 2:
             response_data = {'message': "Person can only reserve up to 2 tables in the same restaurant."}
             instance.is_reserved = False

@@ -10,16 +10,14 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from django.urls import path
 
-# Set the settings before importing anything else
-
-from restaurant.consumers import TableUpdateConsumer
-from django.urls import re_path
+from restaurant.consumers import ReservationUpdateConsumer
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter([
-            path('ws/table_updates/', TableUpdateConsumer.as_asgi())
+            path('ws/reservation_updates/', ReservationUpdateConsumer.as_asgi())  # Новый путь для бронирований
         ])
     ),
 })
+

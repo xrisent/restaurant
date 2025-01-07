@@ -3,8 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
-from restaurant.models import Table
-from restaurant.serializers import TableSerializer
+from restaurant.models import Reservation
+from restaurant.serializers import ReservationSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from .models import Person
@@ -48,8 +48,8 @@ class CurrentUserView(APIView):
         reserved_tables_data = None 
 
         if person_data is not None:
-            reserved_tables = Table.objects.filter(reserved_by=person)
-            reserved_tables_data = TableSerializer(reserved_tables, many=True).data
+            reserved_tables = Reservation.objects.filter(reserved_by=person)
+            reserved_tables_data = ReservationSerializer(reserved_tables, many=True).data
 
         response_data = {
             'user_data': user_data,
