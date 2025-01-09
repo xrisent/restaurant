@@ -106,10 +106,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'restaurant',
-        'USER': 'postgres',
-        'PASSWORD': 'ormonovitachi31261',
-        'HOST': 'localhost', 
+        'NAME': 'restaurant_docker',
+        'USER': 'xrisent',
+        'PASSWORD': 'ormonov',
+        'HOST': 'db',  
         'PORT': '5432', 
     }
 }

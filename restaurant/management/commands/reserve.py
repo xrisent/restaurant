@@ -1,25 +1,38 @@
 from datetime import datetime, timedelta
+import pytz
 import time
 import schedule
-from decouple import config
 import telebot
-
-from restaurant.models import Table
-from user_auth.models import Person
+from decouple import config
+from restaurant.models import *
+from user_auth.models import *
 
 bot = telebot.TeleBot(config('TOKEN'))
+local_timezone = pytz.timezone("Asia/Bishkek")
 
 def reserved_tables():
-    tables = Table.objects.filter(is_reserved=True)
-    for table in tables:
-        persons = Person.objects.filter(id=table.reserved_by.id)
-        for person in persons:
-            if datetime.now().replace(second=0, microsecond=0) == table.reserved_time.replace(second=0, tzinfo=None) + timedelta(hours=3):
-                bot.send_message(person.tg_id, f'Напоминаю! Вы забронировали стол номер {table.number} в ресторане {table.restaurant.name} на {table.reserved_time.strftime("%Y-%m-%d %H:%M")}.')
+    current_time = datetime.now(local_timezone)
+    reservations = Reservation.objects.filter(start_time__gte=current_time)
+    
+    for reservation in reservations:
+        time_difference = reservation.start_time - current_time
+        minutes_difference = time_difference.total_seconds() / 60
         
+        if int(minutes_difference) == 30:
+            person = reservation.reserved_by
+            table = reservation.table
+            restaurant = table.restaurant
 
-schedule.every().minute.do(reserved_tables)
+            start_time_local = reservation.start_time.astimezone(local_timezone)
 
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+            bot.send_message(
+                person.tg_id,
+                f'Напоминаю! Вы забронировали стол номер {table.number} в ресторане {restaurant.name} на {start_time_local.strftime("%d-%m-%Y %H:%M")}'
+            )
+
+def start_reserved_tables_bot():
+    schedule.every().minute.do(reserved_tables)
+    
+    while True:
+        schedule.run_pending()
+        time.sleep(1)

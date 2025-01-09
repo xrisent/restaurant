@@ -4,6 +4,7 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.http import JsonResponse
 from datetime import timedelta
+from django.core.exceptions import ValidationError
 
 
 class Type(models.Model):

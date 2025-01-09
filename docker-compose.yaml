@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "
+      until nc -z db 5432; do echo waiting for db; sleep 2; done;
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py shell -c \"from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@example.com', '123')\" &&
+      daphne -b 0.0.0.0 -p 8000 core.asgi:application"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - db
+    environment:
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - DATABASE_URL=postgresql://xrisent:ormonov@db:5432/restaurant_docker
+      - REDIS_URL=redis://redis:6379/0
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: xrisent
+      POSTGRES_PASSWORD: ormonov
+      POSTGRES_DB: restaurant_docker
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python3 manage.py manage_bots
+    environment:
+      - TELEGRAM_TOKEN=6950842432:AAG81G5x6ri5pyWCgExw44A4bwLZSs5zi4Y
+      - DATABASE_URL=postgresql://xrisent:ormonov@db:5432/restaurant_docker
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - db
+
+volumes:
+  postgres_data:
